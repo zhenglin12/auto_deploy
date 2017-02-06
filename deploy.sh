@@ -1,8 +1,5 @@
-
 #!/bin/bash
-
 #读取变量，并设置为环境变量
-
  while read myline  
 do 
    str=`echo $myline|grep '^#'`
@@ -38,7 +35,7 @@ do
 				fi
 		    else
 			
-			       echo  " git_Protocol is $value"
+			       echo  "git_Protocol is $value"
 			   
 		    fi
 			export git_protocol=$value
@@ -54,9 +51,7 @@ do
 					echo "git_Username cannot be null when the protocol is http"
 				    exit 2
 				fi
-		
 				#echo "git_username is $value"
-				
 			fi
 			export git_Username=$value
 		;;
@@ -69,9 +64,7 @@ do
 					echo "git_Passwd cannot be null when the protocol is http"
 				    exit 2
 				fi
-			
 				#echo " git_Passed is $value"
-				
 			fi
 			export git_Passwd=$value
 	    ;;
@@ -86,7 +79,6 @@ do
 				fi
 			else
 				echo  "build_Method is $value"
-				
 			fi
 			export build_Method=$value
 		;;
@@ -99,7 +91,6 @@ do
 					echo "build_Method cannot be null if the skip_package is false"
 					exit 2
 				fi
-			
 				#echo $value				
 			fi
 			echo "build_type is $value"
@@ -261,7 +252,6 @@ do
 			echo "server_List is $value"
 			export server_List=$value		
 		;;
-		
 		*git_Rep*)
 			if [ X"$value" == X ]
 			then
@@ -270,13 +260,11 @@ do
 			fi
 			echo "git_Rep is $value!!"
 			export git_Rep=$value
-
 			if [ $? -ne 0 ]
 			then 
 				echo "export Rep value not success!!"
 			fi
 			echo $git_Rep
-		
 		;;
 		*git_Branch*)
 			if [ X"$value" == X ]
@@ -303,8 +291,68 @@ do
 		*java_Path*)
 			echo "java_Path is $value"
 			export java_Path=$value
-		;;		
-		esac	
+		;;
+		*java_IsRequired*)
+			if [ "$value"x == x ]
+			then
+               		echo "java_IsRequired cannot be null!!"
+			   		exit 2
+            else
+            		export java_IsRequired=$value
+					echo "java_IsRequired is $java_IsRequired!!"
+			fi
+		;;
+		*python_IsRequired*)
+			if [ "$value"x == x ]
+			then
+               		echo "python_IsRequired cannot be null!!"
+			   		exit 2
+            else
+            		export python_IsRequired=$value
+					echo "python_IsRequired is $python_IsRequired!!"
+			fi
+		;;
+		*python_Version*)
+				export python_Version=$value
+				echo "python_Version is $python_Version!!"
+		;;
+		*python_Path*)
+				export python_Path=$value
+				echo "python_Path is $python_Path !!"
+		;;
+ 		*cmake_IsRequired*)
+			if [ "$value"x == x ]
+			then
+               		echo "cmake_IsRequired cannot be null!!"
+			   		exit 2
+            else
+            		export cmake_IsRequired=$value
+					echo "cmake_IsRequired is $cmake_IsRequired!!"
+			fi
+		;;
+		*cmake_Path*)
+			export cmake_Path=$value
+			echo "cmake_Path is $cmake_Path !!"
+ 		;;
+		*cmake_Version*)
+			export cmake_Version=$value
+			echo "cmake_Version is $cmake_Version !!"
+		;;
+		*rpm_IsRequired*)
+			if [ "$value"x == x ]
+			then
+               		echo "rpm_IsRequired cannot be null!!"
+			   		exit 2
+            else
+            		export rpm_IsRequired=$value
+					echo "rpm_IsRequired is $rpm_IsRequired!!"
+			fi
+		;;
+		*rpm_List*)
+			export rpm_List=$value
+			echo "rpm_List is $rpm_List !!"
+		;;
+	esac
 done<$1
 #set +x 
 : > $buildScript_path/log
@@ -316,7 +364,6 @@ then
 	if [ "$git_Protocol" == 'ssh' ]
 	then
 		echo "please make sure that current user has the corrected ssh key !!"
-
 		set -e
 		git clone $git_Rep
 		local_dir=`pwd`
@@ -350,7 +397,6 @@ set +e
 
 #解析IP函数
 func_splite(){
-
 num=`echo $1|awk -F$2 '{print NF-1}'`
 if [ $num == 0 ]
 then
@@ -372,125 +418,146 @@ fi
 echo ${server[@]}
 }
 
+func_staticSsh(){
+										sshpass -p $ssh_Passwd ssh -p $ssh_Port $ssh_Username@$i "mkdir -p /home/$ssh_Username/buildScript"
+										sshpass -p $ssh_Passwd ssh -p $ssh_Port $ssh_Username@$i "rm -rf /home/$ssh_Username/buildScript/*"
+										set -e
+										sshpass -p $ssh_Passwd scp -P $ssh_Port $buildScript_path/env_clean.sh $ssh_Username@$i:/home/$ssh_Username/buildScript/
+										sshpass -p $ssh_Passwd scp -P $ssh_Port $buildScript_path/env_Pre.sh $ssh_Username@$i:/home/$ssh_Username/buildScript/
+                                        sshpass -p $ssh_Passwd scp -P $ssh_Port $buildScript_path/start_process.sh $ssh_Username@$i:/home/$ssh_Username/buildScript/
+                                        sshpass -p $ssh_Passwd scp -P $ssh_Port $buildScript_path/check_process_kill.sh $ssh_Username@$i:/home/$ssh_Username/buildScript/
+                                        sshpass -p $ssh_Passwd scp -P $ssh_Port $buildScript_path/check_process_run.sh $ssh_Username@$i:/home/$ssh_Username/buildScript/
+                                        set +e
+                                        #ssh clean the file
+                                        sshpass -p $ssh_Passwd ssh -p $ssh_Port $ssh_Username@$i "sh /home/$ssh_Username/buildScript/env_clean.sh $ssh_Username $rsync_Dst $java_Path"
+                                        #ssh env clean and process status check
+										sshpass -p $ssh_Passwd ssh -p $ssh_Port $ssh_Username@$i "sudo sh /home/$ssh_Username/buildScript/env_Pre.sh -J=$java_IsRequired -V=$java_Version -P=$java_Path -Y=$python_IsRequired -E=$python_Version -T=$python_Path -C=$cmake_IsRequired -K=$cmake_Version -M=$cmake_Path -R=$rpm_IsRequired -L=$rpm_List -F=/etc/profile"
+										if [ $? -ne 0 ]
+                                        then
+                                                echo "$i: env prepare occur error,please check the process status !!"
+                                                return 2
+                                        fi
+										sshpass -p $ssh_Passwd ssh -p $ssh_Port $ssh_Username@$i "sudo sh /home/$ssh_Username/buildScript/check_process_kill.sh $rsync_Dst"
+
+                                        if [ $? -ne 0 ]
+                                        then
+                                                echo "$i:kill process occur error,please check the process status !!"
+                                                return 3
+                                        fi
+										#ssh process start
+                                        sshpass -p $ssh_Passwd scp -P $ssh_Port $src_dir/$git_Name.tar.gz $ssh_Username@$i:/home/$ssh_Username/$rsync_Dst/
+
+                                        if [ $? -ne 0 ]
+                                        then
+                                                echo "$i:scp process occur error,please concact with zhenglin !!"
+                                                return 4
+                                        fi
+										sshpass -p $ssh_Passwd ssh -p $ssh_Port $ssh_Username@$i "sudo sh /home/$ssh_Username/buildScript/start_process.sh $ssh_Username $rsync_Dst $git_Name $jacoco_start_dir"
+                             			if [ $? -ne 0 ]
+                                        then
+                                                echo "$i:start process occur error,please concact with zhenglin !!"
+                                                return 5
+                                        fi
+
+}
+
+func_tomcatSsh(){
+										sshpass -p $ssh_Passwd ssh -p $ssh_Port $ssh_Username@$i "mkdir -p /home/$ssh_Username/buildScript"
+										sshpass -p $ssh_Passwd ssh -p $ssh_Port $ssh_Username@$i "rm -rf /home/$ssh_Username/buildScript/*"
+										set -e
+									    sshpass -p $ssh_Passwd scp -P $ssh_Port $buildScript_path/tomcat_env_Pre.sh $ssh_Username@$i:/home/$ssh_Username/buildScript/
+										sshpass -p $ssh_Passwd scp -P $ssh_Port $buildScript_path/env_clean.sh $ssh_Username@$i:/home/$ssh_Username/buildScript/
+										sshpass -p $ssh_Passwd scp -P $ssh_Port $buildScript_path/check_tomcat.sh $ssh_Username@$i:/home/$ssh_Username/buildScript/
+										sshpass -p $ssh_Passwd scp -P $ssh_Port $buildScript_path/start_tomcat.sh $ssh_Username@$i:/home/$ssh_Username/buildScript/
+										sshpass -p $ssh_Passwd scp -P $ssh_Port $buildScript_path/check_process_kill.sh $ssh_Username@$i:/home/$ssh_Username/buildScript/
+										sshpass -p $ssh_Passwd scp -P $ssh_Port $buildScript_path/check_process_run.sh $ssh_Username@$i:/home/$ssh_Username/buildScript/
+										set +e
+										#clean the env
+										sshpass -p $ssh_Passwd ssh -p $ssh_Port $ssh_Username@$i "sh /home/$ssh_Username/buildScript/env_clean.sh $ssh_Username $rsync_Dst/webapps/ROOT $java_Path"
+										sshpass -p $ssh_Passwd ssh -p $ssh_Port $ssh_Username@$i "sudo sh /home/$ssh_Username/buildScript/tomcat_env_Pre.sh $ssh_Username $rsync_Dst/webapps/ROOT $java_Version $java_Path $catalina_Base /etc/profile $tomcat_Version"
+										if [ $? -ne 0 ]
+                                        then
+                                                echo "$i: tomcat env prepare occur error, please check it !"
+                                                return 2
+                                        fi
+										sshpass -p $ssh_Passwd ssh -p $ssh_Port $ssh_Username@$i "sudo /home/$ssh_Username/buildScript/check_tomcat.sh $catalina_Home $catalina_Base $websrv_Port stop"
+										if [ $? -ne 0 ]
+                                        then
+                                                echo "check the tomcat status occur error,maybe the port is occuping!!"
+                                                return 3
+                                        fi
+
+                                        sshpass -p $ssh_Passwd ssh -p $ssh_Port $ssh_Username@$i "sudo sh /home/$ssh_Username/buildScript/check_process_kill.sh $rsync_Dst"
+                                        if [ $? -ne 0 ]
+                                        then
+                                                echo "$i:kill process occur error,please check the process status !!"
+                                                return 4
+                                        fi
+                                        sshpass -p $ssh_Passwd scp -P $ssh_Port $src_dir/$git_Name.tar.gz $ssh_Username@$i:/home/$ssh_Username/$rsync_Dst/webapps/ROOT
+                                        if [ $? -ne 0 ]
+                                        then
+                                                echo "$i: scp process occur error,please concact with zhenglin !!"
+                                                return 5
+                                        fi
+										sshpass -p $ssh_Passwd ssh -p $ssh_Port $ssh_Username@$i "sudo  /home/$ssh_Username/buildScript/start_tomcat.sh $ssh_Username $catalina_Home $catalina_Base $websrv_Port $git_Name"
+										if [ $? -ne 0 ]
+                                        then
+                                                echo "$i:the tomcat is start failed,please check it!!"
+                                                return 6
+                                        fi
+
+}
+
+func_checkRes(){
+								fail_num=`cat $1| grep -v ':0'|grep -v " "|wc -l`
+								succed_num=`cat $1 | grep ':0'|grep -v " "|wc -l`
+								failed_ip_list=`cat $1 |grep -v ':0'|cut -d ":" -f 1`
+								succed_ip_list=`cat $1 |grep ':0'|cut -d ":" -f 1`
+								if [ $fail_num -gt 0 ] && [ $succed_num -gt 0 ]
+								then
+									echo "this deply job  is failed!!"
+									echo "the failed ip list is $failed_ip_list"
+									echo "the succed ip list is $succed_ip_list"
+									exit 1
+								elif [ $fail_num -gt 0 ]
+								then
+									echo "this deply job  is failed!!"
+                    				echo "the failed ip list is $failed_ip_list"
+                    				exit 1
+								elif [ $fail_num -eq 0 ] && [ $succed_num -eq 0 ]
+								then
+									echo "the result callback has some problem,please check the console !!"
+									exit 2
+								else
+									echo "all of the deployment jobs are sucessful!"
+									echo "the succed ip list is $succed_ip_list"
+								fi
+}
 
 #分发逻辑
-
  server=$(func_splite $server_List ',')
         case $websrv_Type in
                         'static')
                                 for i in ${server[@]}
-                                    do
-										#scp transfer
-										sshpass -p $ssh_Passwd ssh -p $ssh_Port $ssh_Username@$i "mkdir -p /home/$ssh_Username/buildScript"
-										sshpass -p $ssh_Passwd scp -P $ssh_Port $buildScript_path/env_Pre.sh $ssh_Username@$i:/home/$ssh_Username/buildScript/
-                                        sshpass -p $ssh_Passwd scp -P $ssh_Port $buildScript_path/start_Process.sh $ssh_Username@$i:/home/$ssh_Username/buildScript/
-                                        sshpass -p $ssh_Passwd scp -P $ssh_Port $buildScript_path/check_Process_kill.sh $ssh_Username@$i:/home/$ssh_Username/buildScript/
-                                        sshpass -p $ssh_Passwd scp -P $ssh_Port $buildScript_path/check_Process_run.sh $ssh_Username@$i:/home/$ssh_Username/buildScript/
-																				
-										#ssh env clean and process status check
-										sshpass -p $ssh_Passwd ssh -p $ssh_Port $ssh_Username@$i "sudo sh /home/$ssh_Username/buildScript/env_Pre.sh $ssh_Username $rsync_Dst $java_Version $java_Path /etc/profile"
-										if [ $? -ne 0 ] 
-                                        then
-                                                echo "$i: env prepare occur error,please check the process status !!"
-                                                exit 2
-                                        fi
-										sshpass -p $ssh_Passwd ssh -p $ssh_Port $ssh_Username@$i "sudo sh /home/$ssh_Username/buildScript/check_process_kill.sh $rsync_Dst"
-
-                                        if [ $? -ne 0 ] 
-                                        then
-                                                echo "$i:kill process occur error,please check the process status !!"
-                                                exit 3
-                                        fi
-										
-										#ssh process start
-                                        sshpass -p $ssh_Passwd scp -P $ssh_Port $src_dir/$git_Name.tar.gz $ssh_Username@$i:/home/$ssh_Username/$rsync_Dst/
-
-                                        if [ $? -ne 0 ] 
-                                        then
-                                                echo "$i:scp process occur error,please concact with zhenglin !!"
-                                                exit 4
-                                        fi
-										
-										sshpass -p $ssh_Passwd ssh -p $ssh_Port $ssh_Username@$i "sudo sh /home/$ssh_Username/buildScript/start.sh $ssh_Username $rsync_Dst $git_Name $jacoco_start_dir"									
-
-                             			if [ $? -ne 0 ] 
-                                        then
-                                                echo "$i:start process occur error,please concact with zhenglin !!"
-                                                exit 5
-                                        fi                                      
-                                   done
-								    
-                                ;;
-
+								do
+									#scp transfer
+									(func_staticSsh;echo $i:$?>>$buildScript_path/log)&
+								done
+								wait
+							############check the job status in differ IP##############################
+								func_checkRes $buildScript_path/log
+				;;
                         'tomcat')
                                 for i in ${server[@]}
-                                    do
-										#prepare the dir and install jdk and tomcat 
-										
-								((	     sshpass -p $ssh_Passwd ssh -p $ssh_Port $ssh_Username@$i "mkdir -p /home/$ssh_Username/buildScript"
-										sshpass -p $ssh_Passwd ssh -p $ssh_Port $ssh_Username@$i "rm -rf /home/$ssh_Username/buildScript/*"
-										set -e
-									    sshpass -p $ssh_Passwd scp -P $ssh_Port $buildScript_path/tomcat_env_Pre.sh $ssh_Username@$i:/home/$ssh_Username/buildScript/                
-										sshpass -p $ssh_Passwd scp -P $ssh_Port $buildScript_path/env_clean.sh $ssh_Username@$i:/home/$ssh_Username/buildScript/                                                         
-										sshpass -p $ssh_Passwd scp -P $ssh_Port $buildScript_path/check_tomcat.sh $ssh_Username@$i:/home/$ssh_Username/buildScript/ 
-										sshpass -p $ssh_Passwd scp -P $ssh_Port $buildScript_path/start_tomcat.sh $ssh_Username@$i:/home/$ssh_Username/buildScript/ 
-										sshpass -p $ssh_Passwd scp -P $ssh_Port $buildScript_path/check_process_kill.sh $ssh_Username@$i:/home/$ssh_Username/buildScript/
-										sshpass -p $ssh_Passwd scp -P $ssh_Port $buildScript_path/check_process_run.sh $ssh_Username@$i:/home/$ssh_Username/buildScript/
-										set +e
-										#clean the env 							
-										 sshpass -p $ssh_Passwd ssh -p $ssh_Port $ssh_Username@$i "sh /home/$ssh_Username/buildScript/env_clean.sh $ssh_Username $rsync_Dst/webapps/ROOT $java_Path"			
-										sshpass -p $ssh_Passwd ssh -p $ssh_Port $ssh_Username@$i "sudo sh /home/$ssh_Username/buildScript/tomcat_env_Pre.sh $ssh_Username $rsync_Dst/webapps/ROOT $java_Version $java_Path $catalina_Base /etc/profile $tomcat_Version"
-										if [ $? -ne 0 ] 
-                                        then
-                                                echo "$i: tomcat env prepare occur error, please check it !"
-                                                exit 2
-                                        fi	
-										sshpass -p $ssh_Passwd ssh -p $ssh_Port $ssh_Username@$i "sudo /home/$ssh_Username/buildScript/check_tomcat.sh $catalina_Home $catalina_Base $websrv_Port stop"
-					if [ $? -ne 0 ]
-                                        then
-                                                echo "check the tomcat status occur error,maybe the port is occuping!!"
-                                                exit 3
-                                        fi
-										
-                                        sshpass -p $ssh_Passwd ssh -p $ssh_Port $ssh_Username@$i "sudo sh /home/$ssh_Username/buildScript/check_process_kill.sh $rsync_Dst"
-                                        if [ $? -ne 0 ] 
-                                        then
-                                                echo "$i:kill process occur error,please check the process status !!"
-                                                exit 4
-                                        fi
+								do
+										#prepare the dir and install jdk and tomcat
+								(func_tomcatSsh;echo $i:$?>>$buildScript_path/log)&
+                                done
+				   				wait
+						############check the job status in differ IP##############################
+								func_checkRes $buildScript_path/log
+		;;
+		esac
 
-                                        sshpass -p $ssh_Passwd scp -P $ssh_Port $src_dir/$git_Name.tar.gz $ssh_Username@$i:/home/$ssh_Username/$rsync_Dst/webapps/ROOT
-                                        if [ $? -ne 0 ] 
-                                        then
-                                                echo "$i: scp process occur error,please concact with zhenglin !!"
-                                                exit 5
-                                        fi
-										sshpass -p $ssh_Passwd ssh -p $ssh_Port $ssh_Username@$i "sudo  /home/$ssh_Username/buildScript/start_tomcat.sh $ssh_Username $catalina_Home $catalina_Base $websrv_Port $git_Name"
-										if [ $? -ne 0 ] 
-                                        then
-                                                echo "$i:the tomcat is start failed,please check it!!"
-                                                exit 6
-                                        fi                                       );echo $i:$?>>$buildScript_path/log)&
-                                   done
-				   wait
-			############check the job status in differ IP##############################
-				fail_num=`cat $buildScript_path/log | grep -v ':0'|grep -v " "|wc -l`
-				succed_num=`cat $buildScript_path/log | grep ':0'|grep -v " "|wc -l`
-				failed_ip_list=`cat $buildScript_path/log |grep -v ':0'|cut -d ":" -f 1`
-				succed_ip_list=`cat $buildScript_path/log |grep ':0'|cut -d ":" -f 1`
-				if [ $fail_num -gt 0 ] && [ $succed_num -gt 0 ]
-				then 
-					echo "this deply job  is failed!!"
-					echo "the failed ip list is $failed_ip_list"
-					echo "the succed ip list is $succed_ip_list"
-					exit 1
-				elif [ $fail_num -gt 0 ]
-				then
-					echo "this deply job  is failed!!"
-                                        echo "the failed ip list is $failed_ip_list"
-				else	
-					echo "all of the deployment jobs are sucessful!"
-					echo "the succed ip list is $succed_ip_list"
-				fi 
-                                ;;
-                 esac
+
+
