@@ -200,6 +200,7 @@ func_staticSsh(){
 										func_ssh_login $i "rm -rf $script_Path"
 										set -e
 										func_scp_login script.tar.gz $i $script_Path
+										func_ssh_login $i "tar -xzvf $script_Path/script.tar.gz -C $script_Path"
 										set +e
                                         #ssh clean the file
                                         func_ssh_login $i "sh $script_Path/env_clean.sh $ssh_Username $rsync_Dst"
@@ -238,6 +239,7 @@ func_tomcatSsh(){
 										func_ssh_login $i "rm -rf $script_Path/*"
 										set -e
 									    func_scp_login script.tar.gz $i $script_Path
+									    func_ssh_login $i "tar -xzvf $script_Path/script.tar.gz -C $script_Path"
 										set +e
 										#clean the env
 #
