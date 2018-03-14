@@ -6,7 +6,7 @@ do
         para=$i
         echo $para
         case $para in
-                -J*)
+        -J*)
                         java_IsRequired=`echo $para |cut -d'='  -f 2`
                                                 if [ "$java_IsRequired"x == x ]
                                                 then

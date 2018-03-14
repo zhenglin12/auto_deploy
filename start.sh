@@ -27,3 +27,9 @@ then
 	echo "start the process error,please check the log !! "
 	exit 2
 fi
+
+
+
+
+
+

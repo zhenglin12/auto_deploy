@@ -11,25 +11,25 @@ else
 		echo ${PID[@]}
 		echo "------kill the task!------"
 		for id in ${PID[*]}
-		do
+		    do
 			echo ${id}
 			
-			
 			kill -9 ${id}       
-			if [ $? -eq 0 ]
-			then          
-				echo "task is killed ..."
-			else
+			    if [ $? -eq 0 ]
+			    then
+			    	echo "task is killed ..."
+			    else
 				echo "kill task failed "
+
 				sleep 2
 				kill -9 ${id} 
-				if [$? -ne 0]
-				then
+				    if [$? -ne 0]
+				    then
 					echo "kill task failed twice, please check the $1 process status!!"
 					exit 2
-				fi
-			fi
-                done
+				    fi
+			    fi
+            done
 fi
 set +x
 
