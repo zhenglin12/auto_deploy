@@ -171,6 +171,7 @@ fi
 
 func_staticSsh(){
                                         ##为root设置默认的home目录，确定ssh登录方式。
+                                        set -x
                                         if [ $ssh_Username == 'root' ]
                                         then
                                             #for tesing if ssh-key is vaild
@@ -232,10 +233,12 @@ func_staticSsh(){
                                                 echo "$i:start process occur error,please concact with zhenglin !!"
                                                 return 5
                                         fi
+                                        set +x
 
                                         }
 
 func_tomcatSsh(){
+                                        set -x
 
 										func_ssh_login $i "mkdir -p $script_Path"
 										func_ssh_login $i "rm -rf $script_Path/*"
@@ -280,6 +283,7 @@ func_tomcatSsh(){
                                                 echo "$i:the tomcat is start failed,please check it!!"
                                                 return 6
                                         fi
+                                        set +x
 }
 
 func_checkRes(){
