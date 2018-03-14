@@ -1,5 +1,7 @@
 #!/bin/bash
 #adapt for the jenkins job deployment
+
+set -x
 if [[ -z $passwd ]]
 then
    ssh_Passwd='jenkins'
@@ -64,7 +66,6 @@ do
 		      -L*)
 						set -x
 						echo $para
-
 						server_list=`echo $para |cut -d'='  -f 2`
 						if [ "$server_list"x == x ]
 						then
@@ -100,7 +101,7 @@ do
 	esac
 done
 
-set -x -e
+set -e
 local_dir=`pwd`
 echo $local_dir
 cd $local_dir
@@ -233,8 +234,9 @@ func_staticSsh(){
                                         fi
 
                                         }
+
 func_tomcatSsh(){
-#
+
 										func_ssh_login $i "mkdir -p $script_Path"
 										func_ssh_login $i "rm -rf $script_Path/*"
 										set -e
@@ -242,7 +244,6 @@ func_tomcatSsh(){
 									    func_ssh_login $i "tar -xzvf $script_Path/script.tar.gz -C $script_Path"
 										set +e
 										#clean the env
-#
 										func_ssh_login $i "sh $script_Path/env_clean.sh $ssh_Username $rsync_Dst"
                                         if [ $? -ne 0 ]
                                         then
@@ -279,6 +280,7 @@ func_tomcatSsh(){
                                                 echo "$i:the tomcat is start failed,please check it!!"
                                                 return 6
                                         fi
+}
 
 func_checkRes(){
 								fail_num=`cat $1| grep -v ':0'|grep -v " "|wc -l`
@@ -307,29 +309,27 @@ func_checkRes(){
 }
 
 #分发逻辑
- server=$(func_splite $server_List ',')
- if [ $deploy_mode == 'common' ]
- then
-        case $websrv_Type in
+ server=$(func_splite ${server_List} ',')
+ case $websrv_Type in
                         'static')
                                 for i in ${server[@]}
 								do
 									#scp transfer
-									(func_staticSsh;echo $i:$?>>$buildScript_path/log)&
+									(func_staticSsh;echo $i:$?>>$src_dir/deploy.log)&
 								done
 								wait
 							############check the job status in differ IP##############################
-								func_checkRes $buildScript_path/log
-				;;
+								func_checkRes $src_dir/deploy.log
+				        ;;
                         'tomcat')
                                 for i in ${server[@]}
 								do
 										#prepare the dir and install jdk and tomcat
-								(func_tomcatSsh;echo $i:$?>>$buildScript_path/log)&
+								(func_tomcatSsh;echo $i:$?>>$src_dir/deploy.log)&
                                 done
 				   				wait
 						############check the job status in differ IP##############################
-								func_checkRes $buildScript_path/log
-		;;
-		esac
-fi
+								func_checkRes ${src_dir}/deploy.log
+		                ;;
+		                esac
+set +x
