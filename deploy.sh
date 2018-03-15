@@ -320,7 +320,7 @@ func_checkRes(){
 
 #分发逻辑
 set -x
- server=$(func_splite ${server_List} ',')
+ server=$(func_splite ${server_list} ',')
  case $websrv_Type in
                         'static')
                                 for i in ${server[@]}
