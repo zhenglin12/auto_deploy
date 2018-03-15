@@ -65,7 +65,7 @@ do
 						fi
 			;;
 		      -L*)
-						set -x
+
 						echo $para
 						server_list=`echo $para |cut -d'='  -f 2`
 						if [ "$server_list"x == x ]
@@ -75,7 +75,7 @@ do
 						else
 							echo 'server_list'  is $server_list !!
 						fi
-						set +x
+
 			;;
 		      -H*)
 						proxy_host=`echo $para |cut -d'='  -f 2`
@@ -111,9 +111,10 @@ cd $src_dir
 src_dir=`pwd`
 set +e
 tar -czf  package.tar.gz  *
-
+set +x
 #解析IP函数
 func_splite(){
+set -x
 num=`echo $1|awk -F$2 '{print NF-1}'`
 if [ $num -ne 0 ]
 then
@@ -133,10 +134,12 @@ else
         done 
 fi
 echo ${server[@]}
+set +x
 }
 
 
 func_ssh_login(){
+set -x
 if [ $ssh_Login == 'ssh-key' ]
 then
     ssh -p $ssh_Port $ssh_Username@$1 "$2"
@@ -151,9 +154,11 @@ else
         return 7
     fi
 fi
+set +x
 }
 
 func_scp_login(){
+set -x
 if [ $ssh_Login == 'ssh-key' ]
 then
     scp -p $ssh_Port $1 $ssh_Username@$2:$3
@@ -168,6 +173,7 @@ else
         return 8
     fi
 fi
+set +x
 }
 
 func_staticSsh(){
@@ -313,6 +319,7 @@ func_checkRes(){
 }
 
 #分发逻辑
+set -x
  server=$(func_splite ${server_List} ',')
  case $websrv_Type in
                         'static')
