@@ -107,10 +107,10 @@ local_dir=`pwd`
 echo $local_dir
 cd $local_dir
 cd $src_dir
-
 src_dir=`pwd`
 set +e
 tar -czf  package.tar.gz  *
+echo >deploy.log
 set +x
 #解析IP函数
 func_splite(){
@@ -206,7 +206,7 @@ func_staticSsh(){
                                             fi
                                         fi
 										func_ssh_login $i "mkdir -p $script_Path"
-										func_ssh_login $i "rm -rf $script_Path"
+										func_ssh_login $i "rm -rf $script_Path/*"
 										set -e
 										func_scp_login $local_script/script.tar.gz $i $script_Path
 										func_ssh_login $i "tar -xzvf $script_Path/script.tar.gz -C $script_Path"
@@ -246,6 +246,33 @@ func_staticSsh(){
 
 func_tomcatSsh(){
                                         set -x
+                                        if [ $ssh_Username == 'root' ]
+                                        then
+                                            #for tesing if ssh-key is vaild
+                                            ssh_Login='ssh-key'
+                                            script_Path='/home/jenkins/buildScript'
+                                        else
+                                            script_Path="/home/$ssh_Username/buildScript"
+                                            sshpass -p $ssh_Passwd ssh -p $ssh_Port $ssh_Username@$i "pwd"
+                                            if [ $? -ne 0 ]
+                                            then
+                                                echo "user-passwd login failed!!"
+                                                ssh_Login='ssh-key'
+                                            else
+                                                ssh_Login='user-passwd'
+                                            fi
+                                        fi
+
+                                        if [ $ssh_Login == 'ssh-key' ]
+                                        then
+                                            ssh -p $ssh_Port $ssh_Username@i "pwd"
+                                            if [ $? -ne 0 ]
+                                            then
+                                                 echo "ssh authorization is failed, please check the ssh rsa certificate or the ssh username and passwd !!"
+                                                 return 6
+                                            fi
+                                        fi   
+
 										func_ssh_login $i "mkdir -p $script_Path"
 										func_ssh_login $i "rm -rf $script_Path/*"
 										set -e
