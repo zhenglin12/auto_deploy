@@ -116,7 +116,7 @@ set +x
 func_splite(){
 set -x
 num=`echo $1|awk -F$2 '{print NF-1}'`
-if [ $num -ne 0 ]
+if [ $num -eq 0 ]
 then
         server[0]=$1
 else
@@ -320,8 +320,8 @@ func_checkRes(){
 
 #分发逻辑
 set -x
- server=$(func_splite ${server_list} ',')
- case $websrv_Type in
+server=$(func_splite ${server_list} ',')
+case $websrv_Type in
                         'static')
                                 for i in ${server[@]}
 								do
