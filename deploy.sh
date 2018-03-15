@@ -161,13 +161,13 @@ func_scp_login(){
 set -x
 if [ $ssh_Login == 'ssh-key' ]
 then
-    scp -p $ssh_Port $1 $ssh_Username@$2:$3
+    scp -P $ssh_Port $1 $ssh_Username@$2:$3
     if [ $? -ne 0 ]
     then
         return 8
     fi
 else
-    sshpass -p $ssh_Passwd scp -p $ssh_Port  $1 $ssh_Username@$2:$3
+    sshpass -p $ssh_Passwd scp -P $ssh_Port  $1 $ssh_Username@$2:$3
      if [ $? -ne 0 ]
     then
         return 8
@@ -271,7 +271,7 @@ func_tomcatSsh(){
                                                  echo "ssh authorization is failed, please check the ssh rsa certificate or the ssh username and passwd !!"
                                                  return 6
                                             fi
-                                        fi   
+                                        fi
 
 										func_ssh_login $i "mkdir -p $script_Path"
 										func_ssh_login $i "rm -rf $script_Path/*"
