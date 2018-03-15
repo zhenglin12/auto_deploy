@@ -115,7 +115,7 @@ tar -czf  package.tar.gz  *
 #解析IP函数
 func_splite(){
 num=`echo $1|awk -F$2 '{print NF-1}'`
-if [ $num == 0 ]
+if [ $num -ne 0 ]
 then
         server[0]=$1
 else
@@ -240,8 +240,6 @@ func_staticSsh(){
 
 func_tomcatSsh(){
                                         set -x
-
-
 										func_ssh_login $i "mkdir -p $script_Path"
 										func_ssh_login $i "rm -rf $script_Path/*"
 										set -e
