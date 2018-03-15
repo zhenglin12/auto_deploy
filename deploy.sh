@@ -110,7 +110,7 @@ cd $src_dir
 src_dir=`pwd`
 set +e
 tar -czf  package.tar.gz  *
-echo >deploy.log
+cat /dev/null >deploy.log
 set +x
 #解析IP函数
 func_splite(){
